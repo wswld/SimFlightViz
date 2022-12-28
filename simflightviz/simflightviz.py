@@ -7,7 +7,10 @@ import os
 from datetime import datetime, timedelta
 from typing import Any
 from statistics import mean
+from matplotlib.markers import MarkerStyle
 
+
+GARMIN_MAGENTA = "#FD02FF"
 
 @dataclass
 class Stop:
@@ -35,6 +38,9 @@ fig = plt.figure()
 with open(os.path.dirname(__file__)+'/flightlog.csv') as source:
     stops = [Stop(**x) for x in list(csv.DictReader(source))]
 
+    for stop in stops:
+        stop.lon = stop.lon if stop.lon < 0 else stop.lon - 360
+
     min_lon = min([x.lon for x in stops])
     min_lat = min([x.lat for x in stops])
     max_lon = max([x.lon for x in stops])
@@ -45,27 +51,31 @@ with open(os.path.dirname(__file__)+'/flightlog.csv') as source:
         llcrnrlat=min_lat-3.,
         urcrnrlon=max_lon+5.,
         urcrnrlat=max_lat+3.,
-        rsphere=(6378137.00,6356752.3142),
         resolution='h',
-        projection='merc'
+        projection='cyl',
+        fix_aspect='C'
     )
     _initialize_map(m)
+
+    ms = MarkerStyle("D").scaled(0.5, 0.5)
 
     for i,stop in enumerate(stops):
         m.scatter(
             x=[stop.lon],
             y=[stop.lat], 
             latlon=True, 
-            marker="x",
-            color='#ff24ff', 
+            marker=ms,
+            color=GARMIN_MAGENTA, 
             label=[stop.icao]
         )
         plt.text(
-            *m(stop.lon+0.1, stop.lat+0.1), 
+            *m(stop.lon+0.2, stop.lat+0.2), 
             stop.icao, 
             zorder=99.9, 
-            fontsize="x-small",
-            fontweight="bold"
+            fontsize="xx-small",
+            # fontweight="light",
+            color="white",
+            bbox=dict(facecolor='black', edgecolor=GARMIN_MAGENTA, pad=1.2)
         )
         if i == 0:
             continue
@@ -73,17 +83,17 @@ with open(os.path.dirname(__file__)+'/flightlog.csv') as source:
         m.plot(
             x=[last_stop.lon,stop.lon],
             y=[last_stop.lat,stop.lat], 
-            color='#ff24ff', 
+            color=GARMIN_MAGENTA, 
             latlon=True
         )
-        time_en_route = (datetime.fromisoformat(stop.arrival)
-                         -datetime.fromisoformat(last_stop.departure))
-        plt.text(*m(
-            mean([last_stop.lon, stop.lon])+0.1, 
-            mean([last_stop.lat, stop.lat])+0.1), 
-            '{:02}:{:02}'.format(time_en_route.seconds//3600, (time_en_route.seconds//60)%60),
-            backgroundcolor="#ff24ff",
-            color="#ffffff",
-            fontsize="xx-small")
+        # time_en_route = (datetime.fromisoformat(stop.arrival)
+        #                  -datetime.fromisoformat(last_stop.departure))
+        # plt.text(*m(
+        #     mean([last_stop.lon, stop.lon])+0.1, 
+        #     mean([last_stop.lat, stop.lat])+0.1), 
+        #     '{:02}:{:02}'.format(time_en_route.seconds//3600, (time_en_route.seconds//60)%60),
+        #     backgroundcolor="#ff24ff",
+        #     color="#ffffff",
+        #     fontsize="xx-small")
 
 plt.show()
