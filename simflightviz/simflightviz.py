@@ -32,7 +32,7 @@ def _initialize_map(m: Basemap) -> None:
     m.drawmapboundary(fill_color='#68BBE3')
     m.drawcountries(linestyle='dotted')
 
-
+times_en_route = []
 fig = plt.figure()
 
 with open(os.path.dirname(__file__)+'/flightlog.csv') as source:
@@ -86,8 +86,7 @@ with open(os.path.dirname(__file__)+'/flightlog.csv') as source:
             color=GARMIN_MAGENTA, 
             latlon=True
         )
-        # time_en_route = (datetime.fromisoformat(stop.arrival)
-        #                  -datetime.fromisoformat(last_stop.departure))
+        times_en_route.append(datetime.fromisoformat(stop.arrival)-datetime.fromisoformat(last_stop.departure))
         # plt.text(*m(
         #     mean([last_stop.lon, stop.lon])+0.1, 
         #     mean([last_stop.lat, stop.lat])+0.1), 
@@ -95,5 +94,7 @@ with open(os.path.dirname(__file__)+'/flightlog.csv') as source:
         #     backgroundcolor="#ff24ff",
         #     color="#ffffff",
         #     fontsize="xx-small")
+
+print(sum([x.seconds for x in times_en_route]))
 
 plt.show()
